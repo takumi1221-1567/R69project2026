@@ -1,0 +1,266 @@
+/* ============================================
+   R69project2026 - スタイルシート
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #fff;
+}
+
+/* ============================================
+   メインコンテナ
+   ============================================ */
+#app-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================
+   動画表示エリア
+   ============================================ */
+#video-container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #000;
+}
+
+.character-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.05s ease;
+}
+
+.character-video.active {
+    z-index: 1;
+    opacity: 1;
+}
+
+/* ============================================
+   ローディング
+   ============================================ */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+    margin-top: 12px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
+   レスポンス表示
+   ============================================ */
+#response-display {
+    position: absolute;
+    bottom: 100px;
+    left: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   モード表示インジケーター
+   ============================================ */
+#mode-indicator {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 20;
+    cursor: default;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#mode-indicator.armor-mode {
+    background: rgba(30, 100, 200, 0.7);
+    border: 1px solid rgba(60, 140, 255, 0.5);
+}
+
+#mode-indicator.normal-mode {
+    background: rgba(200, 60, 30, 0.7);
+    border: 1px solid rgba(255, 100, 60, 0.5);
+}
+
+/* ============================================
+   ステータス表示
+   ============================================ */
+#status-indicator {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ============================================
+   入力エリア
+   ============================================ */
+#input-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 30;
+}
+
+#input-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 0 4px 0 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#user-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 16px;
+    padding: 10px 0;
+}
+
+#user-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================
+   ボタン
+   ============================================ */
+#mic-button,
+#send-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    background: transparent;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+#mic-button:hover,
+#send-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#mic-button.recording {
+    background: rgba(255, 50, 50, 0.6);
+    animation: recording-pulse 1s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 50, 50, 0); }
+}
+
+#send-button {
+    background: rgba(30, 100, 200, 0.7);
+}
+
+#send-button:hover {
+    background: rgba(30, 100, 200, 0.9);
+}
+
+/* ============================================
+   ユーティリティ
+   ============================================ */
+.hidden {
+    display: none !important;
+}

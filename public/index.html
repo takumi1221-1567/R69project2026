@@ -11,7 +11,7 @@
 <body>
     <div id="app-container">
 
-        <!-- 動画表示エリア -->
+        <!-- 動画表示エリア（全画面背景） -->
         <div id="video-container">
             <video
                 id="character-video-1"
@@ -38,21 +38,21 @@
             </div>
         </div>
 
-        <!-- レスポンス表示 -->
-        <div id="response-display" class="hidden"></div>
-
-        <!-- モード表示 -->
+        <!-- モード表示（動画の上） -->
         <div id="mode-indicator" class="armor-mode">
             <span id="mode-text">装甲モード</span>
         </div>
 
-        <!-- ステータス表示 -->
+        <!-- ステータス表示（動画の上） -->
         <div id="status-indicator" class="hidden">
             <div class="status-dot"></div>
             <span id="status-text">応答中...</span>
         </div>
 
-        <!-- 入力エリア -->
+        <!-- レスポンス表示（動画の上） -->
+        <div id="response-display" class="hidden"></div>
+
+        <!-- 入力エリア（動画の上にスケルトン表示） -->
         <div id="input-area">
             <div id="input-container">
                 <input
@@ -62,7 +62,7 @@
                     autocomplete="off"
                 >
                 <button id="mic-button" aria-label="音声入力">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                         <path d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M19 11C19 14.866 15.866 18 12 18C8.13401 18 5 14.866 5 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -71,7 +71,7 @@
                 </button>
             </div>
             <button id="send-button" class="hidden" aria-label="送信">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>

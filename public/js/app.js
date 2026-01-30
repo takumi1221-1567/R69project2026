@@ -134,11 +134,16 @@ async function handleUserInput(text) {
 
 // ============================================
 // コマンド検出
+// armorモード: 「チェンジ」「キャストオフ」→ normalへ遷移
+// normalモード: 「チェンジ」「キャストオン」→ armorへ遷移
 // ============================================
 function detectCommand(text) {
     const t = text.trim();
-    if (t.includes('キャストオフ') || t.toLowerCase() === 'castoff') return 'castoff';
-    if (t.includes('チェンジ') || t.toLowerCase() === 'change') return 'change';
+    if (t.includes('キャストオフ') || t.includes('チェンジ') ||
+        t.includes('キャストオン') ||
+        t.toLowerCase() === 'castoff' || t.toLowerCase() === 'change') {
+        return 'toggle';
+    }
     return null;
 }
 
@@ -146,35 +151,17 @@ function detectCommand(text) {
 // コマンド処理
 // ============================================
 async function handleCommand(command) {
-    if (command === 'castoff') {
-        if (currentMode === 'normal') {
-            speak('すでに通常モードです');
-            return;
-        }
-        // 装甲 → 通常
+    if (command === 'toggle') {
+        // 現在のモードから反対へ遷移動画を再生して切り替え
         if (window.videoController) {
-            await window.videoController.playCastoffTransition();
+            await window.videoController.playTransition();
             currentMode = window.videoController.currentMode;
             updateModeUI();
-            speak('キャストオフ');
+            speak(currentMode === 'armor' ? 'チェンジ' : 'キャストオフ');
         } else {
-            setMode('normal');
-            speak('キャストオフ');
-        }
-    } else if (command === 'change') {
-        if (currentMode === 'armor') {
-            speak('すでに装甲モードです');
-            return;
-        }
-        // 通常 → 装甲
-        if (window.videoController) {
-            await window.videoController.playChangeTransition();
-            currentMode = window.videoController.currentMode;
-            updateModeUI();
-            speak('チェンジ');
-        } else {
-            setMode('armor');
-            speak('チェンジ');
+            const newMode = currentMode === 'armor' ? 'normal' : 'armor';
+            setMode(newMode);
+            speak(newMode === 'armor' ? 'チェンジ' : 'キャストオフ');
         }
     }
 }

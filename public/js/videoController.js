@@ -2,6 +2,21 @@
 // R69project2026 - 動画再生コントローラー
 // デュアルビデオによるシームレスループ再生
 // ============================================
+//
+// ■ キャストオンモード (armor)
+//   話す時       : 装甲通常.mp4
+//   待機中       : 装甲通常.mp4 (ループ)
+//   3秒操作なし  : 装甲腕組み.mp4
+//   6秒操作なし  : 装甲キョロ.mp4
+//   チェンジ/キャストオフ指示 : キャストオフ.mp4 → normalへ遷移
+//
+// ■ キャストオフモード (normal)
+//   話す時       : 喋り.mp4
+//   待機中       : 通常.mp4 (ループ)
+//   3秒操作なし  : 腕組み.mp4
+//   6秒操作なし  : キョロ.mp4
+//   チェンジ/キャストオン指示 : チェンジ.mp4 → armorへ遷移
+// ============================================
 
 class VideoController {
     constructor() {
@@ -17,23 +32,24 @@ class VideoController {
         this.isSpeaking = false;
         this.currentVideoPath = '';
 
-        this.idleTimer = null;
-        this.idleTimeout = 5000; // 5秒ごとにランダムアクション
+        // 2段階アイドルタイマー
+        this.idleTimer1 = null; // 3秒後 → 腕組み
+        this.idleTimer2 = null; // 6秒後 → キョロ
 
         this.videoPaths = {
             armor: {
-                idle: '/videos/armor/装甲通常.mp4',
+                idle:     '/videos/armor/装甲通常.mp4',
                 speaking: '/videos/armor/装甲通常.mp4',
-                idleAction1: '/videos/armor/装甲腕組み.mp4',
-                idleAction2: '/videos/armor/装甲キョロ.mp4',
-                castoff: '/videos/armor/キャストオフ.mp4'
+                action3s: '/videos/armor/装甲腕組み.mp4',
+                action6s: '/videos/armor/装甲キョロ.mp4',
+                transition: '/videos/armor/キャストオフ.mp4'
             },
             normal: {
-                idle: '/videos/normal/通常.mp4',
+                idle:     '/videos/normal/通常.mp4',
                 speaking: '/videos/normal/喋り.mp4',
-                idleAction1: '/videos/normal/腕組み.mp4',
-                idleAction2: '/videos/normal/キョロ.mp4',
-                change: '/videos/normal/チェンジ.mp4'
+                action3s: '/videos/normal/腕組み.mp4',
+                action6s: '/videos/normal/キョロ.mp4',
+                transition: '/videos/normal/チェンジ.mp4'
             }
         };
 
@@ -44,7 +60,7 @@ class VideoController {
         console.log('VideoController 初期化中...');
         this.setupEventListeners();
         await this.loadVideo(this.videoPaths.armor.idle, true);
-        this.startIdleTimer();
+        this.startIdleTimers();
         console.log('VideoController 初期化完了');
     }
 
@@ -66,6 +82,9 @@ class VideoController {
         });
     }
 
+    // ============================================
+    // 動画読み込み（初回）
+    // ============================================
     async loadVideo(videoPath, autoplay = true) {
         return new Promise((resolve, reject) => {
             this.showLoading();
@@ -90,6 +109,9 @@ class VideoController {
         });
     }
 
+    // ============================================
+    // シームレス動画切り替え
+    // ============================================
     async switchVideo(videoPath, loop = true) {
         if (this.currentVideoPath === videoPath) {
             this.activeVideo.loop = loop;
@@ -108,7 +130,6 @@ class VideoController {
                 this.inactiveVideo.removeEventListener('canplay', onReady);
                 try {
                     await this.inactiveVideo.play();
-
                     setTimeout(() => {
                         this.activeVideo.classList.remove('active');
                         this.inactiveVideo.classList.add('active');
@@ -136,6 +157,9 @@ class VideoController {
         });
     }
 
+    // ============================================
+    // 動画再生終了ハンドラ
+    // ============================================
     handleVideoEnded() {
         if (this.currentState === 'speaking') {
             this.stopSpeaking();
@@ -144,18 +168,24 @@ class VideoController {
         }
     }
 
+    // ============================================
+    // 待機動画再生
+    // ============================================
     async playIdleVideo() {
         this.currentState = 'idle';
         const videoPath = this.videoPaths[this.currentMode].idle;
         await this.switchVideo(videoPath, true);
-        this.resetIdleTimer();
+        this.startIdleTimers();
     }
 
+    // ============================================
+    // 話す動画
+    // ============================================
     async startSpeaking() {
         if (this.isSpeaking) return;
         this.isSpeaking = true;
         this.currentState = 'speaking';
-        this.stopIdleTimer();
+        this.stopIdleTimers();
         const videoPath = this.videoPaths[this.currentMode].speaking;
         await this.switchVideo(videoPath, true);
     }
@@ -166,30 +196,67 @@ class VideoController {
         await this.playIdleVideo();
     }
 
-    async playRandomIdleAction() {
-        if (this.isSpeaking) {
-            this.resetIdleTimer();
-            return;
-        }
+    // ============================================
+    // 2段階アイドルタイマー
+    //   3秒 → 腕組み (action3s)
+    //   6秒 → キョロ (action6s)
+    // ============================================
+    startIdleTimers() {
+        this.stopIdleTimers();
 
-        this.currentState = 'action';
-        const actionType = Math.random() < 0.5 ? 'idleAction1' : 'idleAction2';
-        const videoPath = this.videoPaths[this.currentMode][actionType];
-        await this.switchVideo(videoPath, false);
+        // 3秒後: 腕組み
+        this.idleTimer1 = setTimeout(async () => {
+            if (this.isSpeaking || this.currentState === 'transition') return;
+            console.log('3秒操作なし → 腕組み');
+            this.currentState = 'action';
+            const videoPath = this.videoPaths[this.currentMode].action3s;
+            await this.switchVideo(videoPath, false);
+        }, 3000);
+
+        // 6秒後: キョロ
+        this.idleTimer2 = setTimeout(async () => {
+            if (this.isSpeaking || this.currentState === 'transition') return;
+            console.log('6秒操作なし → キョロ');
+            this.currentState = 'action';
+            const videoPath = this.videoPaths[this.currentMode].action6s;
+            await this.switchVideo(videoPath, false);
+        }, 6000);
     }
 
-    // キャストオフ: 装甲 → 通常
-    async playCastoffTransition() {
-        console.log('キャストオフ遷移動画再生');
-        this.currentState = 'action';
-        this.stopIdleTimer();
+    stopIdleTimers() {
+        if (this.idleTimer1) {
+            clearTimeout(this.idleTimer1);
+            this.idleTimer1 = null;
+        }
+        if (this.idleTimer2) {
+            clearTimeout(this.idleTimer2);
+            this.idleTimer2 = null;
+        }
+    }
 
-        const videoPath = this.videoPaths.armor.castoff;
+    resetIdleTimers() {
+        this.startIdleTimers();
+    }
+
+    // ============================================
+    // モード遷移動画
+    // armor → normal : キャストオフ.mp4 再生後 normalへ
+    // normal → armor : チェンジ.mp4 再生後 armorへ
+    // ============================================
+    async playTransition() {
+        const fromMode = this.currentMode;
+        const toMode = fromMode === 'armor' ? 'normal' : 'armor';
+
+        console.log(`遷移動画再生: ${fromMode} → ${toMode}`);
+        this.currentState = 'transition';
+        this.stopIdleTimers();
+
+        const videoPath = this.videoPaths[fromMode].transition;
         try {
             await this.switchVideo(videoPath, false);
         } catch (error) {
-            console.error('キャストオフ動画エラー:', error);
-            this.currentMode = 'normal';
+            console.error('遷移動画エラー:', error);
+            this.currentMode = toMode;
             await this.playIdleVideo();
             return;
         }
@@ -200,7 +267,7 @@ class VideoController {
             const handleEnd = async () => {
                 this.activeVideo.removeEventListener('ended', handleEnd);
                 if (timeoutId) clearTimeout(timeoutId);
-                this.currentMode = 'normal';
+                this.currentMode = toMode;
                 await this.playIdleVideo();
                 resolve();
             };
@@ -209,44 +276,7 @@ class VideoController {
 
             timeoutId = setTimeout(() => {
                 this.activeVideo.removeEventListener('ended', handleEnd);
-                this.currentMode = 'normal';
-                this.playIdleVideo().then(resolve);
-            }, 30000);
-        });
-    }
-
-    // チェンジ: 通常 → 装甲
-    async playChangeTransition() {
-        console.log('チェンジ遷移動画再生');
-        this.currentState = 'action';
-        this.stopIdleTimer();
-
-        const videoPath = this.videoPaths.normal.change;
-        try {
-            await this.switchVideo(videoPath, false);
-        } catch (error) {
-            console.error('チェンジ動画エラー:', error);
-            this.currentMode = 'armor';
-            await this.playIdleVideo();
-            return;
-        }
-
-        return new Promise((resolve) => {
-            let timeoutId = null;
-
-            const handleEnd = async () => {
-                this.activeVideo.removeEventListener('ended', handleEnd);
-                if (timeoutId) clearTimeout(timeoutId);
-                this.currentMode = 'armor';
-                await this.playIdleVideo();
-                resolve();
-            };
-
-            this.activeVideo.addEventListener('ended', handleEnd);
-
-            timeoutId = setTimeout(() => {
-                this.activeVideo.removeEventListener('ended', handleEnd);
-                this.currentMode = 'armor';
+                this.currentMode = toMode;
                 this.playIdleVideo().then(resolve);
             }, 30000);
         });
@@ -255,24 +285,6 @@ class VideoController {
     setMode(mode) {
         this.currentMode = mode;
         this.playIdleVideo();
-    }
-
-    startIdleTimer() {
-        this.stopIdleTimer();
-        this.idleTimer = setTimeout(() => {
-            this.playRandomIdleAction();
-        }, this.idleTimeout);
-    }
-
-    stopIdleTimer() {
-        if (this.idleTimer) {
-            clearTimeout(this.idleTimer);
-            this.idleTimer = null;
-        }
-    }
-
-    resetIdleTimer() {
-        this.startIdleTimer();
     }
 
     showLoading() {

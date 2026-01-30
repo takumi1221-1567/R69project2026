@@ -1,16 +1,19 @@
 /* ============================================
    R69project2026 - スタイルシート
+   iPhone 15 縦画面最適化 (393x852)
    ============================================ */
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
     width: 100%;
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
     background: #000;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -18,22 +21,24 @@ html, body {
 }
 
 /* ============================================
-   メインコンテナ
+   メインコンテナ（全画面）
    ============================================ */
 #app-container {
     position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    height: 100dvh;
 }
 
 /* ============================================
-   動画表示エリア
+   動画表示エリア（全画面背景）
    ============================================ */
 #video-container {
-    position: relative;
-    flex: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     background: #000;
 }
@@ -44,7 +49,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     z-index: 0;
     opacity: 0;
     transition: opacity 0.05s ease;
@@ -73,8 +78,8 @@ html, body {
 }
 
 .spinner {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: 3px solid rgba(255, 255, 255, 0.3);
     border-top-color: #fff;
     border-radius: 50%;
@@ -86,30 +91,31 @@ html, body {
 }
 
 .loading-overlay p {
-    margin-top: 12px;
-    font-size: 14px;
+    margin-top: 10px;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.8);
 }
 
 /* ============================================
-   レスポンス表示
+   レスポンス表示（動画の上にオーバーレイ）
    ============================================ */
 #response-display {
     position: absolute;
-    bottom: 100px;
+    bottom: 80px;
     left: 16px;
     right: 16px;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.5);
     color: #fff;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-radius: 12px;
     font-size: 14px;
     line-height: 1.5;
-    max-height: 150px;
+    max-height: 120px;
     overflow-y: auto;
     z-index: 20;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================
@@ -117,28 +123,28 @@ html, body {
    ============================================ */
 #mode-indicator {
     position: absolute;
-    top: 16px;
+    top: env(safe-area-inset-top, 16px);
     right: 16px;
     display: flex;
     align-items: center;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 11px;
     font-weight: 600;
     z-index: 20;
     cursor: default;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 #mode-indicator.armor-mode {
-    background: rgba(30, 100, 200, 0.7);
-    border: 1px solid rgba(60, 140, 255, 0.5);
+    background: rgba(30, 100, 200, 0.5);
+    border: 1px solid rgba(60, 140, 255, 0.3);
 }
 
 #mode-indicator.normal-mode {
-    background: rgba(200, 60, 30, 0.7);
-    border: 1px solid rgba(255, 100, 60, 0.5);
+    background: rgba(200, 60, 30, 0.5);
+    border: 1px solid rgba(255, 100, 60, 0.3);
 }
 
 /* ============================================
@@ -146,23 +152,24 @@ html, body {
    ============================================ */
 #status-indicator {
     position: absolute;
-    top: 16px;
+    top: env(safe-area-inset-top, 16px);
     left: 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    font-size: 12px;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 11px;
     z-index: 20;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: #4caf50;
     animation: pulse 1.2s ease-in-out infinite;
@@ -174,21 +181,19 @@ html, body {
 }
 
 /* ============================================
-   入力エリア
+   入力エリア（動画の上にスケルトン表示）
    ============================================ */
 #input-area {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 12px 16px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 10px 16px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
     z-index: 30;
 }
 
@@ -196,10 +201,12 @@ html, body {
     flex: 1;
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.35);
     border-radius: 24px;
-    padding: 0 4px 0 16px;
+    padding: 0 6px 0 16px;
     border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 #user-input {
@@ -213,16 +220,45 @@ html, body {
 }
 
 #user-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
 }
 
 /* ============================================
-   ボタン
+   ボタン（スケルトン・動画の上）
    ============================================ */
-#mic-button,
+#mic-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    background: transparent;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+#mic-button:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#mic-button.recording {
+    color: #ff4444;
+    background: rgba(255, 50, 50, 0.2);
+    animation: recording-pulse 1s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 50, 50, 0); }
+}
+
 #send-button {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: none;
     display: flex;
@@ -230,32 +266,15 @@ html, body {
     justify-content: center;
     cursor: pointer;
     color: #fff;
-    background: transparent;
+    background: rgba(30, 100, 200, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: background 0.2s;
     flex-shrink: 0;
 }
 
-#mic-button:hover,
-#send-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-#mic-button.recording {
-    background: rgba(255, 50, 50, 0.6);
-    animation: recording-pulse 1s ease-in-out infinite;
-}
-
-@keyframes recording-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 50, 50, 0.4); }
-    50% { box-shadow: 0 0 0 10px rgba(255, 50, 50, 0); }
-}
-
-#send-button {
-    background: rgba(30, 100, 200, 0.7);
-}
-
-#send-button:hover {
-    background: rgba(30, 100, 200, 0.9);
+#send-button:active {
+    background: rgba(30, 100, 200, 0.85);
 }
 
 /* ============================================

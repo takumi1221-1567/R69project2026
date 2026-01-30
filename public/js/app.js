@@ -7,7 +7,8 @@ let currentMode = 'armor';
 let isRecording = false;
 let isProcessing = false;
 let recognition = null;
-let conversationId = null; // Dify会話ID
+let conversationId = null;
+let audioUnlocked = false; // iOS音声再生ロック解除済みフラグ
 
 // DOM要素
 const userInput = document.getElementById('user-input');
@@ -18,17 +19,89 @@ const modeText = document.getElementById('mode-text');
 const statusIndicator = document.getElementById('status-indicator');
 const statusText = document.getElementById('status-text');
 const responseDisplay = document.getElementById('response-display');
+const startOverlay = document.getElementById('start-overlay');
+
+// ============================================
+// LINE内ブラウザ検出
+// ============================================
+function isLineBrowser() {
+    return /Line/i.test(navigator.userAgent);
+}
+
+function isIOSSafari() {
+    const ua = navigator.userAgent;
+    return /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|Line/.test(ua);
+}
 
 // ============================================
 // 初期化
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('R69project2026 起動中...');
+
+    // LINE内ブラウザの場合 → Safari誘導を表示
+    if (isLineBrowser()) {
+        showLineBrowserNotice();
+        return;
+    }
+
     initSpeechRecognition();
     setupEventListeners();
     setMode('armor');
+
+    // iOS: タップで音声とビデオのロックを解除する画面を表示
+    if (startOverlay) {
+        startOverlay.addEventListener('click', unlockAudioAndStart);
+    }
+
     console.log('R69project2026 起動完了');
 });
+
+// ============================================
+// LINE内ブラウザ通知
+// ============================================
+function showLineBrowserNotice() {
+    if (startOverlay) {
+        startOverlay.innerHTML =
+            '<div class="overlay-content">' +
+            '<p class="overlay-title">Safariで開いてください</p>' +
+            '<p class="overlay-sub">LINEブラウザではマイク・音声再生が<br>使用できません</p>' +
+            '<p class="overlay-url">右下の「…」→「Safariで開く」</p>' +
+            '</div>';
+        startOverlay.classList.remove('hidden');
+    }
+}
+
+// ============================================
+// iOS音声・動画ロック解除（初回タップ必須）
+// ============================================
+function unlockAudioAndStart() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+
+    // SpeechSynthesisを空発話でアンロック（iOS必須）
+    const dummy = new SpeechSynthesisUtterance('');
+    dummy.volume = 0;
+    window.speechSynthesis.speak(dummy);
+
+    // video要素を再生してアンロック
+    const v1 = document.getElementById('character-video-1');
+    const v2 = document.getElementById('character-video-2');
+    if (v1) v1.play().catch(() => {});
+    if (v2) {
+        v2.play().then(() => v2.pause()).catch(() => {});
+    }
+
+    // オーバーレイ非表示
+    if (startOverlay) {
+        startOverlay.classList.add('hidden');
+    }
+
+    // VideoControllerが初期化前の場合、動画読み込み再実行
+    if (window.videoController) {
+        window.videoController.playIdleVideo();
+    }
+}
 
 // ============================================
 // 音声認識初期化
@@ -37,6 +110,7 @@ function initSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         console.warn('音声認識APIが利用できません');
+        micButton.classList.add('disabled');
         return;
     }
 
@@ -61,6 +135,9 @@ function initSpeechRecognition() {
         console.error('音声認識エラー:', event.error);
         isRecording = false;
         micButton.classList.remove('recording');
+        if (event.error === 'not-allowed') {
+            alert('マイクの使用が許可されていません。\nブラウザの設定でマイクを許可してください。');
+        }
     };
 }
 
@@ -100,8 +177,13 @@ function setupEventListeners() {
 // 音声録音トグル
 // ============================================
 function toggleRecording() {
+    // iOS音声未解除なら先に解除
+    if (!audioUnlocked) {
+        unlockAudioAndStart();
+    }
+
     if (!recognition) {
-        alert('音声認識が利用できません');
+        alert('このブラウザでは音声認識を利用できません。\nSafariまたはChromeで開いてください。');
         return;
     }
 
@@ -122,6 +204,11 @@ function toggleRecording() {
 async function handleUserInput(text) {
     if (isProcessing) return;
 
+    // iOS音声未解除なら先に解除
+    if (!audioUnlocked) {
+        unlockAudioAndStart();
+    }
+
     console.log('入力:', text, '現在のモード:', currentMode);
 
     const command = detectCommand(text);
@@ -134,8 +221,6 @@ async function handleUserInput(text) {
 
 // ============================================
 // コマンド検出
-// armorモード: 「チェンジ」「キャストオフ」→ normalへ遷移
-// normalモード: 「チェンジ」「キャストオン」→ armorへ遷移
 // ============================================
 function detectCommand(text) {
     const t = text.trim();
@@ -152,7 +237,6 @@ function detectCommand(text) {
 // ============================================
 async function handleCommand(command) {
     if (command === 'toggle') {
-        // 現在のモードから反対へ遷移動画を再生して切り替え
         if (window.videoController) {
             await window.videoController.playTransition();
             currentMode = window.videoController.currentMode;
@@ -211,7 +295,7 @@ async function sendToDify(text) {
 }
 
 // ============================================
-// 音声出力
+// 音声出力（iOS対応）
 // ============================================
 function speak(text) {
     console.log('音声出力:', text);
@@ -229,6 +313,23 @@ function speak(text) {
     utterance.onend = () => {
         if (window.videoController) window.videoController.stopSpeaking();
     };
+
+    // iOS Safari: speechSynthesisが止まるバグ対策
+    // 長文の場合、途中で再生が止まるのを防ぐ
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        const iosResume = setInterval(() => {
+            if (!window.speechSynthesis.speaking) {
+                clearInterval(iosResume);
+            } else {
+                window.speechSynthesis.resume();
+            }
+        }, 3000);
+
+        utterance.onend = () => {
+            clearInterval(iosResume);
+            if (window.videoController) window.videoController.stopSpeaking();
+        };
+    }
 
     window.speechSynthesis.speak(utterance);
 }
